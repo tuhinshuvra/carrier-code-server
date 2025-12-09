@@ -2,17 +2,22 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const express = require('express');
 const cors = require('cors');
 const app = express();
-const port = process.env.PORT || 5000
+const jwt = require('jsonwebtoken');
+const port = process.env.PORT || 5000;
+require('dotenv').config()
 
 // middleware
-app.use(cors())
+app.use(cors({
+    origin: ['http://localhost:3000'],
+    credentials: true
+}));
 app.use(express.json())
 
 // jobportal_db_user
 // hSV8OsH4ImRJqEvX
 
 
-const uri = "mongodb+srv://jobportal_db_user:hSV8OsH4ImRJqEvX@cluster0.bbxcwfm.mongodb.net/?appName=Cluster0";
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.bbxcwfm.mongodb.net/?appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -35,6 +40,14 @@ async function run() {
 
         app.get('/', (req, res) => {
             res.send('Carrier Code Server is running....');
+        })
+
+        // jwt token related api
+        app.post('/jwt', async (req, res) => {
+            const { email } = req.body;
+            const user = { email };
+            const token = jwt.sign(user, process.env.JWT_ACCESS_SECRET, { expiresIn: '1h' });
+            res.send({ token });
         })
 
         // job application related api
@@ -135,7 +148,7 @@ async function run() {
 
 
         await client.db("admin").command({ ping: 1 });
-        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
     } finally {
         // Ensures that the client will close when you finish/error
